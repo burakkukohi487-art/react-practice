@@ -1,10 +1,10 @@
-# react-practice
+# nextjs-todo-app
 
-reactの基礎練習(ToDoアプリ)
+NextJSの基礎練習(ToDoアプリ)
 
 ## デモ
 
-https://react-practice-lovat-eight.vercel.app/
+https://nextjs-todo-app-phi-one.vercel.app/
 
 ## 機能
 

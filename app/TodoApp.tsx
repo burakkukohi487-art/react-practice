@@ -28,7 +28,12 @@ export default function TodoApp() {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
 
+  // 入力欄の初期化
   const [inputText, setInputText] = useState("");
+
+  // 編集状態の初期化
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
 
   // タスクを追加する関数
   const addTodo = () => {
@@ -59,10 +64,33 @@ export default function TodoApp() {
 
   // フィルターで絞り込み
   const filteredTodos = todos.filter((todo) => {
-    if (filter === "active") return !todo.done;   // 完了済み以外(未完了)
+    if (filter === "active") return !todo.done;   // 未完了(完了済み以外)
     if (filter === "done") return todo.done;      // 完了済みだけ
     return true;
   })
+
+  // 編集モードに入る
+  const startEdit = (id: number, text: string) => {
+    setEditingId(id);
+    setEditingText(text);
+  }
+
+  // 編集状態を初期化
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingText("");
+  }
+
+  // 編集を保存
+  const saveEdit = () => {
+    // 空の場合保存しない
+    if (editingText.trim() === "") return;
+
+    setTodos(todos.map((todo) =>
+      todo.id === editingId ? { ...todo, text: editingText.trim() } : todo
+    ));
+    cancelEdit();
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -92,13 +120,12 @@ export default function TodoApp() {
         <div className="flex gap-2 mb-4">
           {(["all", "active", "done"] as Filter[]).map((f) => (
             <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-              filter === f 
-              ? "bg-blue-500 text-white border-blue-500"
-              : "text-gray-500 border-gray-300 hover:border-blue-400"
-            }`}
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1 text-sm rounded-full border transition-colors ${filter === f
+                ? "bg-blue-500 text-white border-blue-500"
+                : "text-gray-500 border-gray-300 hover:border-blue-400"
+                }`}
             >
               {f === "all" ? "全て" : f === "active" ? "未完了" : "完了済み"}
             </button>
@@ -111,14 +138,36 @@ export default function TodoApp() {
                 type="checkbox"
                 checked={todo.done}
                 onChange={() => toggleTodo(todo.id)}
-                className="w-4 h-4 accent-blue-500" />
-              <span className={`flex-1 text-sm ${todo.done ? "line-through text-gray-400" : "text-gray-700"}`}>
-                {todo.text}
-              </span>
+                className="w-4 h-4 accent-blue-500"
+              />
+              {todo.id === editingId
+                ? (
+                  // 編集モード
+                  <input
+                    type="text"
+                    value={editingText}
+                    onChange={(e) => setEditingText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEdit();
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                    onBlur={saveEdit}
+                    autoFocus
+                    className="flex-1 text-sm border-b border-blue-400 outline-none text-gray-700"
+                  />
+                ) : (
+                  // 通常モード
+                  <span
+                    onDoubleClick={() => startEdit(todo.id, todo.text)}
+                    className={`flex-1 text-sm ${todo.done ? "line-through text-gray-400" : "text-gray-700"}`}>
+                    {todo.text}
+                  </span>
+                )}
               <button
                 // アロー関数で包まないと、画面が描画された瞬間に実行されるので注意
                 onClick={() => deleteTodo(todo.id)}
-                className="text-xs text-red-400 hover:text-red-600 transition-colors">
+                className="text-xs text-red-400 hover:text-red-600 transition-colors"
+              >
                 削除
               </button>
             </li>
